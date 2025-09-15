@@ -85,13 +85,13 @@ hackmerlin-agent/
 
 ### Current Success Rate: 71.4% (5/7 levels)
 
-- ✅ **Level 1**: Direct password extraction
-- ✅ **Level 2**: Reverse word with AI correction
-- ✅ **Level 3**: Reverse word with AI correction  
-- ✅ **Level 4**: Acrostic poem extraction
-- ✅ **Level 5**: Acrostic poem extraction
-- ❌ **Level 6**: Acrostic extraction (needs improvement)
-- ❌ **Level 7**: Last word acrostic (not reached consistently)
+- **Level 1**: Direct password extraction
+- **Level 2**: Reverse word with AI correction
+-  **Level 3**: Reverse word with AI correction  
+-  **Level 4**: Acrostic poem extraction
+-  **Level 5**: Acrostic poem extraction
+-  **Level 6**: Acrostic extraction (needs improvement)
+-  **Level 7**: Last word acrostic (not reached consistently)
 
 ## 🔧 Technical Implementation
 
