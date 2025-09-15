@@ -248,6 +248,11 @@ class PasswordExtractor:
                 "STEP 1: Reverse all letters\n"
                 "STEP 2: Correct to valid English word if needed\n"
                 "\n"
+                "EXAMPLES:\n"
+                "- ARUORA → AROURA → AURORA (fix spelling)\n"
+                "- REMMILG → GLIMMER (already correct)\n"
+                "- TEMLEH → HELMET (already correct)\n"
+                "\n"
                 "Output: WORD"
             )
         elif level == 7:
