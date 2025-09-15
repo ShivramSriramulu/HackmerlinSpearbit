@@ -16,6 +16,18 @@ class PasswordExtractor:
     def rule_based(self, level, response):
         logger.info(f"🔧 Using rule-based extraction for level {level}")
         
+        # Special handling for blocking responses
+        if any(phrase in response.lower() for phrase in ["cannot comply", "manipulation attempt", "blocked", "detected"]):
+            logger.info("🚫 Detected blocking response, trying alternative extraction")
+            # Look for any words that might be passwords
+            words = re.findall(r'\b[A-Za-z]{4,}\b', response)
+            if words:
+                # Try to find the most likely password word
+                for word in sorted(words, key=len, reverse=True):
+                    if len(word) >= 4 and word.upper() not in ["MERLIN", "CANNOT", "COMPLY", "DETECTED", "MANIPULATION", "ATTEMPT", "BLOCKED"]:
+                        logger.info(f"🎯 Extracted from blocking response: '{word.upper()}'")
+                        return word.upper()
+        
         # Level 1: Look for quoted words first, then standalone uppercase words
         if level == 1:
             # Remove the Merlin signature first
@@ -102,7 +114,7 @@ class PasswordExtractor:
                     logger.info(f"📝 Acrostic from comma-separated lines: '{acrostic}'")
                     return acrostic.upper()
 
-        # Level 7: try both acrostic and last word methods
+        # Level 7: try multiple extraction methods
         if level == 7:
             lines = response.splitlines()
             
@@ -112,7 +124,30 @@ class PasswordExtractor:
             # Method 2: First letters of last words
             last_word_letters = "".join(line.strip().split()[-1][0] for line in lines if line.strip())
             
-            # Choose the longer/more likely word
+            # Method 3: Try comma-separated lines (like Level 6)
+            if ',' in response:
+                comma_lines = response.split(', ')
+                comma_acrostic = "".join(line.strip()[0] for line in comma_lines if line.strip())
+                if len(comma_acrostic) >= 3:
+                    logger.info(f"🎵 Level 7 comma acrostic: '{comma_acrostic}'")
+                    return comma_acrostic.upper()
+            
+            # Method 4: Look for quoted words or obvious passwords
+            quoted_words = re.findall(r'"([A-Za-z]+)"', response)
+            if quoted_words:
+                longest_quoted = max(quoted_words, key=len).upper()
+                if len(longest_quoted) >= 3:
+                    logger.info(f"🎵 Level 7 quoted word: '{longest_quoted}'")
+                    return longest_quoted
+            
+            # Method 5: Look for all caps words
+            caps_words = re.findall(r'\b[A-Z]{3,}\b', response)
+            if caps_words:
+                longest_caps = max(caps_words, key=len)
+                logger.info(f"🎵 Level 7 caps word: '{longest_caps}'")
+                return longest_caps
+            
+            # Choose the longer/more likely word from acrostic methods
             if len(acrostic) >= len(last_word_letters) and len(acrostic) >= 3:
                 logger.info(f"🎵 Level 7 acrostic: '{acrostic}'")
                 return acrostic.upper()
