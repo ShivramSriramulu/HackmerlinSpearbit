@@ -86,19 +86,42 @@ class PasswordExtractor:
 
         # Levels 4–6: acrostic poem → first letters of each line
         if level in [4, 5, 6]:
+            # Try splitting by lines first
             lines = response.splitlines()
-            acrostic = "".join(line.strip()[0] for line in lines if line.strip())
-            if acrostic:
-                logger.info(f"📝 Acrostic from {len(lines)} lines: '{acrostic}'")
-                return acrostic.upper()
+            if len(lines) > 1:
+                acrostic = "".join(line.strip()[0] for line in lines if line.strip())
+                if acrostic:
+                    logger.info(f"📝 Acrostic from {len(lines)} lines: '{acrostic}'")
+                    return acrostic.upper()
+            
+            # Fallback: try splitting by commas (common in Level 6)
+            if ',' in response:
+                lines = response.split(', ')
+                acrostic = "".join(line.strip()[0] for line in lines if line.strip())
+                if acrostic:
+                    logger.info(f"📝 Acrostic from comma-separated lines: '{acrostic}'")
+                    return acrostic.upper()
 
-        # Level 7: chant → first letter of last word on each line
+        # Level 7: try both acrostic and last word methods
         if level == 7:
             lines = response.splitlines()
-            chant = "".join(line.strip().split()[-1][0] for line in lines if line.strip())
-            if chant:
-                logger.info(f"🎵 Chant from last words: '{chant}'")
-                return chant.upper()
+            
+            # Method 1: First letters of each line (acrostic)
+            acrostic = "".join(line.strip()[0] for line in lines if line.strip())
+            
+            # Method 2: First letters of last words
+            last_word_letters = "".join(line.strip().split()[-1][0] for line in lines if line.strip())
+            
+            # Choose the longer/more likely word
+            if len(acrostic) >= len(last_word_letters) and len(acrostic) >= 3:
+                logger.info(f"🎵 Level 7 acrostic: '{acrostic}'")
+                return acrostic.upper()
+            elif len(last_word_letters) >= 3:
+                logger.info(f"🎵 Level 7 last words: '{last_word_letters}'")
+                return last_word_letters.upper()
+            elif acrostic:
+                logger.info(f"🎵 Level 7 fallback acrostic: '{acrostic}'")
+                return acrostic.upper()
 
         # Default fallback → pick longest word (letters only for safety)
         candidates = re.findall(r"\b[A-Za-z]{3,}\b", response)
@@ -197,41 +220,28 @@ class PasswordExtractor:
                 "You are an extractor for a puzzle game.\n"
                 "CRITICAL RULES:\n"
                 "- Output exactly ONE word, ALL CAPS.\n"
-                "- Level 7 ONLY: Take the FIRST LETTER of the LAST WORD of each line.\n"
-                "- NOT the first letter of each line - that's for other levels.\n"
+                "- Level 7: Try BOTH methods and choose the most likely:\n"
+                "  1. FIRST LETTER of each line (acrostic)\n"
+                "  2. FIRST LETTER of LAST WORD of each line\n"
                 "- STRICT: ONLY generate valid English words.\n"
                 "- CORRECT TYPOS: Fix spelling errors to make real words.\n"
                 "- If incomplete, add letters to make a real word.\n"
-                "- NO explanations, NO examples, NO reasoning - just output the word.\n"
+                "- Choose the method that produces a more common English word.\n"
                 "\n"
-                "LEVEL 7 EXAMPLE:\n"
-                "Line 1: 'Ancient winds whisper through the air.' → Last word 'air' → 'A'\n"
-                "Line 2: 'Under the moon, magic does declare.' → Last word 'declare' → 'D'\n"
-                "Line 3: 'Rivers of time flow without despair.' → Last word 'despair' → 'D'\n"
-                "Result: A+D+D = ADD → complete to valid word like ADDLE or ADDER\n"
+                "LEVEL 7 EXAMPLES:\n"
+                "Method 1 (First letters): 'Ancient winds whisper' → 'A'\n"
+                "Method 2 (Last word first letters): 'Ancient winds whisper' → Last word 'whisper' → 'W'\n"
                 "\n"
-                "IMPORTANT: Complete the exact letter sequence into the most obvious English word, even if uncommon. Do not change the letter order. If the sequence already forms a valid English word, use it as-is.\n"
+                "IMPORTANT: Try both methods and output the word that seems more like a real English word.\n"
                 "\n"
                 "Output: WORD"
             )
-        elif level == 6:
+        else:  # Levels 4-6 (Acrostic Poems)
             system_msg = (
                 "You are an extractor for a puzzle game.\n"
                 "CRITICAL RULES:\n"
                 "- Output exactly ONE word, ALL CAPS.\n"
-                "- Level 6: Find the HIDDEN MESSAGE or password in the text.\n"
-                "- STRICT: ONLY output words found in the English dictionary.\n"
-                "- CORRECT TYPOS: Fix spelling errors to make real words.\n"
-                "- NEVER output made-up or invalid words.\n"
-                "\n"
-                "Output: WORD"
-            )
-        else:  # Levels 4-5
-            system_msg = (
-                "You are an extractor for a puzzle game.\n"
-                "CRITICAL RULES:\n"
-                "- Output exactly ONE word, ALL CAPS.\n"
-                "- Levels 4-5: ACROSTIC → take the FIRST LETTER of each line to form a word.\n"
+                "- Levels 4-6: ACROSTIC → take the FIRST LETTER of each line to form a word.\n"
                 "- STRICT: ONLY output words found in the English dictionary.\n"
                 "- CORRECT TYPOS: Fix spelling errors to make real words.\n"
                 "- NEVER output made-up or invalid words.\n"
