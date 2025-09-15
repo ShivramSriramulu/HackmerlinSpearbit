@@ -148,6 +148,7 @@ class PasswordExtractor:
                 return longest_caps
             
             # Choose the longer/more likely word from acrostic methods
+            # Prioritize acrostic if it's longer or same length
             if len(acrostic) >= len(last_word_letters) and len(acrostic) >= 3:
                 logger.info(f"🎵 Level 7 acrostic: '{acrostic}'")
                 return acrostic.upper()
@@ -273,6 +274,8 @@ class PasswordExtractor:
                 "Method 2 (Last word first letters): 'Ancient winds whisper' → Last word 'whisper' → 'W'\n"
                 "\n"
                 "IMPORTANT: Try both methods and output the word that seems more like a real English word.\n"
+                "If the first letters form a longer word, use that even if it's not a common word.\n"
+                "Example: WORDIZ is better than WORD if that's what the first letters spell.\n"
                 "\n"
                 "Output: WORD"
             )
